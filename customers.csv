@@ -1,0 +1,8 @@
+customer_name,kyc_status,risk_rating,account_balance
+Sahana,Verified,Low,50000
+Arjun,Pending,Medium,120000
+Priya,Verified,Low,75000
+Rahul,Rejected,High,30000
+Meera,Pending,High,200000
+Kiran,Verified,Low,45000
+Himaja,Pending,High,500000
