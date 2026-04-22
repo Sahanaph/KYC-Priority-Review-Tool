@@ -4,6 +4,7 @@ Automatically identifies high-risk KYC customers and generates
 AI powered compliance review recommendations.
 """
 
+import json
 import os
 import pandas as pd
 import requests
@@ -18,16 +19,29 @@ def get_ai_review(customer):
         "Content-Type": "application/json"
     }
     prompt = f"""
+ 
+    Rules you must follow:
+    - Never make assumptions beyond the data provided
+    - Always recommend a specific action
+    - Never use casual language
+    - If data is insufficient, say so explicitly
+
     Customer Name: {customer["customer_name"]}
     KYC Status: {customer["kyc_status"]}
     Risk Rating: {customer["risk_rating"]}
     Account Balance: {customer["account_balance"]}
 
-    As an AML expert, explain in 3 lines why this customer needs 
-    priority review and what action should be taken.
+    Respond ONLY in this exact JSON format, no other text:
+   {{
+    "risk_summary": "one sentence stating the risk",
+    "why_it_matters": "one sentence explaining the impact",
+    "action_required": "one sentence with specific action",
+    "urgency": "High or Medium or Low"
+   }}
+
     """
     messages = [
-        {"role": "system", "content": "You are an AML and KYC banking compliance expert."},
+        {"role": "system", "content": "You are an AML and KYC banking compliance expert. with 10 years of experiance. You have a deep understanding of AML regulations, KYC processes, and risk management in the banking industry. Your expertise allows you to analyze customer data and provide insightful recommendations to ensure compliance and mitigate risks effectively."},
         {"role": "user", "content": prompt}
     ]
     body = {"model": "llama-3.3-70b-versatile", "messages": messages}
@@ -35,7 +49,9 @@ def get_ai_review(customer):
     try:
         response = requests.post(url, headers=headers, json=body)
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        raw = data["choices"][0]["message"]["content"]
+        parsed = json.loads(raw)
+        return parsed
     except Exception as e:
         return f"Could not generate review: {e}"
 
@@ -57,8 +73,15 @@ def main():
     for index, customer in priority_customers.iterrows():
         print(f"Customer: {customer['customer_name']}")
         review = get_ai_review(customer)
-        print(f"Review: {review}")
-        print("---")
+        if isinstance(review, dict): 
+          print(f"Risk: {review['risk_summary']}")
+          print(f"Impact: {review['why_it_matters']}")
+          print(f"Action Required: {review['action_required']}")
+          print(f"Urgency: {review['urgency']}")
+
+        else:
+          print(review)
+          print("-----")
 
 
 if __name__ == "__main__":
